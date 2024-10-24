@@ -1,7 +1,8 @@
+# frozen_string_literal: true
+
 require 'active_support/core_ext'
 
 module BusinessTime
-
   # controls the behavior of this gem.  You can change
   # the beginning_of_workday, end_of_workday, and the list of holidays
   # manually, or with a yaml file and the load method.
@@ -18,6 +19,10 @@ module BusinessTime
     }
 
     class << self
+      def holidays
+        @holidays ||= ::HolidayCalendar.find_by(year: Date.current.year)&.holidays || []
+      end
+
       def beginning_of_workday=(time)
         config[:beginning_of_workday] = ParsedTime.parse(time)
       end
@@ -82,12 +87,6 @@ module BusinessTime
 
     threadsafe_cattr_reader :work_week
 
-    # You can set this yourself, either by the load method below, or
-    # by saying
-    #   BusinessTime::Config.holidays << my_holiday_date_object
-    # someplace in the initializers of your application.
-    threadsafe_cattr_accessor :holidays
-
     # working hours for each day - if not set using global variables :beginning_of_workday
     # and end_of_workday. Keys will be added ad weekdays.
     # Example:
@@ -106,7 +105,7 @@ module BusinessTime
       # by saying
       #   BusinessTime::Config.end_of_workday = "5:30 pm"
       # someplace in the initializers of your application.
-      def end_of_workday(day=nil)
+      def end_of_workday(day = nil)
         if day
           wday = work_hours[int_to_wday(day.wday)]
           wday ? (wday.last == ParsedTime.new(0, 0) ? ParsedTime.new(23, 59, 59) : wday.last) : config[:end_of_workday]
@@ -119,7 +118,7 @@ module BusinessTime
       # by saying
       #   BusinessTime::Config.beginning_of_workday = "8:30 am"
       # someplace in the initializers of your application.
-      def beginning_of_workday(day=nil)
+      def beginning_of_workday(day = nil)
         if day
           wday = work_hours[int_to_wday(day.wday)]
           wday ? wday.first : config[:beginning_of_workday]
@@ -140,9 +139,9 @@ module BusinessTime
       def weekdays
         return _weekdays unless _weekdays.nil?
 
-        days = (!work_hours.empty? ? work_hours.keys : work_week).map do |day_name|
+        days = (!work_hours.empty? ? work_hours.keys : work_week).filter_map do |day_name|
           wday_to_int(day_name)
-        end.compact
+        end
 
         self._weekdays = days.sort.to_set
       end
@@ -158,8 +157,8 @@ module BusinessTime
       #       - Dec 25th, 2010
       def load(file)
         reset
-        data = YAML::load(file.respond_to?(:read) ? file : File.open(file))
-        config = (data["business_time"] || {})
+        data = YAML.load(file.respond_to?(:read) ? file : File.open(file))
+        config = (data['business_time'] || {})
 
         # load each config variable from the file, if it's present and valid
         config_vars = %w(beginning_of_workday end_of_workday work_week work_hours)
@@ -167,14 +166,14 @@ module BusinessTime
           send("#{var}=", config[var]) if config[var] && respond_to?("#{var}=")
         end
 
-        (config["holidays"] || []).each do |holiday|
-          holidays << Date.parse(holiday)
-        end
+        # (config["holidays"] || []).each do |holiday|
+        #   holidays << Date.parse(holiday)
+        # end
       end
 
       def with(config)
         local_config_stack.push(config().dup)
-        config.each { |k,v| send("#{k}=", v) } # calculations are done on setting
+        config.each { |k, v| send("#{k}=", v) } # calculations are done on setting
         yield
       ensure
         local_config_stack.pop
@@ -191,12 +190,12 @@ module BusinessTime
       ]
       private_constant :DAY_NAMES
 
-      def wday_to_int day_name
+      def wday_to_int(day_name)
         lowercase_day_names = DAY_NAMES.map(&:downcase)
         lowercase_day_names.find_index(day_name.to_s.downcase)
       end
 
-      def int_to_wday num
+      def int_to_wday(num)
         DAY_NAMES.map(&:downcase).map(&:to_sym)[num]
       end
 

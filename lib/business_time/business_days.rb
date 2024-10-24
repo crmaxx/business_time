@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'active_support/time'
 
 module BusinessTime
@@ -5,7 +7,7 @@ module BusinessTime
     include Comparable
     attr_reader :days
 
-    def initialize(days, options={})
+    def initialize(days, options = {})
       @days = days
     end
 
@@ -16,14 +18,14 @@ module BusinessTime
       self.days <=> other.days
     end
 
-    def after(time = Time.current, options={})
+    def after(time = Time.current, options = {})
       non_negative_days? ? calculate_after(time, @days, options) : calculate_before(time, -@days, options)
     end
 
     alias_method :from_now, :after
     alias_method :since, :after
 
-    def before(time = Time.current, options={})
+    def before(time = Time.current, options = {})
       non_negative_days? ? calculate_before(time, @days, options) : calculate_after(time, -@days, options)
     end
 
@@ -36,7 +38,7 @@ module BusinessTime
       @days >= 0
     end
 
-    def calculate_after(time, days, options={})
+    def calculate_after(time, days, options = {})
       if (time.is_a?(Time) || time.is_a?(DateTime)) && !time.workday?(options)
         time = Time.beginning_of_workday(time)
       end
@@ -52,7 +54,7 @@ module BusinessTime
       time
     end
 
-    def calculate_before(time, days, options={})
+    def calculate_before(time, days, options = {})
       if (time.is_a?(Time) || time.is_a?(DateTime)) && !time.workday?(options)
         time = Time.beginning_of_workday(time)
       end

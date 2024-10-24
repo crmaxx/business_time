@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module BusinessTime
   class ParsedTime
     include Comparable

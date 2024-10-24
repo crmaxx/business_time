@@ -1,16 +1,18 @@
+# frozen_string_literal: true
+
 # Add workday and weekday concepts to the Date class
 class Date
   include BusinessTime::TimeExtensions
 
-  def business_days_until(to_date, inclusive = false, options={})
+  def business_days_until(to_date, inclusive = false, options = {})
     business_dates_until(to_date, inclusive, options).size
   end
 
-  def business_dates_until(to_date, inclusive = false, options={})
+  def business_dates_until(to_date, inclusive = false, options = {})
     if inclusive
-      (self..to_date).select{|this_date| this_date.workday?(options)}
+      (self..to_date).select { |this_date| this_date.workday?(options) }
     else
-      (self...to_date).select{|this_date| this_date.workday?(options)}
+      (self...to_date).select { |this_date| this_date.workday?(options) }
     end
   end
 
