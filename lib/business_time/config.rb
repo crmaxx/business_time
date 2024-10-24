@@ -20,7 +20,9 @@ module BusinessTime
 
     class << self
       def holidays
-        @holidays ||= ::HolidayCalendar.find_by(year: Date.current.year)&.holidays || []
+        @holidays ||= {}
+        @holidays[Date.current.year] ||= ::HolidayCalendar.find_by(year: Date.current.year)&.holidays || []
+        @holidays.values.flatten
       end
 
       def beginning_of_workday=(time)
