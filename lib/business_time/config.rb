@@ -20,8 +20,10 @@ module BusinessTime
 
     class << self
       def holidays
+        return @holidays.values.flatten if defined?(@holidays) && @holidays[Date.current.year].present?
+
         @holidays ||= {}
-        @holidays[Date.current.year] ||= ::HolidayCalendar.find_by(year: Date.current.year)&.holidays || []
+        @holidays[Date.current.year] = ::HolidayCalendar.find_by(year: Date.current.year)&.holidays || []
         @holidays.values.flatten
       end
 
